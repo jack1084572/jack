@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spread Rollover</title>
+</head>
+<body>
+    <h1>Spread Rollover</h1>
+    <label for="StockPrice">股价:</label>
+    <input type="text" id="StockPrice" value="16.1"/><br> 
+        <label for="InvestMoney">投资额:</label>
+    <input type="text" id="InvestMoney" value="50000"/><br> 
+    <label for="Dividen">每期派息:</label>
+    <input type="text" id="Dividen" value="0.174"/><br> 
+     <p>----------------------------------------------------------------------------</p>   
+    <label for="LongTimeOptionEXprice">现sell call买入价:</label>
+    <input type="text" id="LongTimeOptionEXprice" value="0.44" style="width: 800px;"/><br>    
+    <label for="LongTimeOption">现call 卖出价:</label>
+    <input type="text" id="LongTimeOption" value="0.19" style="width: 800px;"/><br>    
+  
+    <p>----------------------------------------------------------------------------</p>
+    <label for="NearByOptionEXprice">目标期权执行价:</label>
+    <input type="text" id="NearByOptionEXprice" value=" 3.00,5.00,8.00,10.00,12.00,15.00,17.00,20.00,22.00,25.00,30.00,32.00,35.00" style="width: 800px;"/><br>       
+    <label for="NearByOption">目标期权买价:</label>
+    <input type="text" id="NearByOption" value="15.00,12.70,8.40,6.85,5.55,3.60,2.94,1.70,1.44,0.95,0.54,0.38,0.55" style="width: 800px;"/><br>     
+        <label for="NearBySellOption">目标期权卖价:</label>
+    <input type="text" id="NearBySellOption" value="11.30,9.00,8.20,4.80,3.70,3.20,1.95,1.31,0.77,0.51,0.28,0.19,0.00" style="width: 800px;"/><br>  
+    
+    <button onclick="calculateTotal()">计算</button> <!-- 添加计算按钮 -->
+
+    <div id="resultContainer"></div> <!-- 用于显示计算结果的容器 -->
+
+    <script>
+        function findMaxAndIndex(arr) {
+            if (arr.length === 0) {
+                return null; // 数组为空，返回 null
+            }
+
+            let maxIndex = 0; // 假设第一个元素为最大值的索引
+            let maxValue = arr[0]; // 假设第一个元素为最大值
+
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i] > maxValue) {
+                    maxValue = arr[i]; // 更新最大值
+                    maxIndex = i; // 更新最大值的索引
+                }
+            }
+
+            return { maxIndex: maxIndex, maxValue: maxValue }; // 返回包含最大值和索引的对象
+        }
+        
+        function CaculateRate(StockPrice, ExcusePrice, Premium, ExcuseDay) {
+            var ActualyCobasic = 0;
+            var TicketYTD = 0;
+            var ResMoney = 0;
+            if (StockPrice >= ExcusePrice) {
+            ResMoney = (ExcusePrice + Premium - StockPrice);
+                ActualyCobasic = ExcusePrice -  ResMoney;
+                TicketYTD = 100 * 360 * ResMoney / ExcusePrice / ExcuseDay;
+            } else {
+             ResMoney = Premium;
+                ActualyCobasic = StockPrice - Premium;
+                TicketYTD = 100 * 360 * Premium / StockPrice / ExcuseDay;
+            }
+            return { ResMoney:ResMoney,ActualyCobasic: ActualyCobasic, TicketYTD: TicketYTD };
+        }
+
+        function calculateTotal() {
+            // 获取结果容器
+            var resultContainer = document.getElementById("resultContainer");
+            // 清空结果容器
+            resultContainer.innerHTML = "";
+       var stockPrice = document.getElementById("StockPrice").value;
+       var investment = document.getElementById("InvestMoney").value;
+       var divPerPeriod = document.getElementById("Dividen").value;
+       var sellCallBuyPrice = document.getElementById("LongTimeOptionEXprice").value;            
+       var currCallSell = document.getElementById("LongTimeOption").value; 
+       
+       var targetStrike = document.getElementById("NearByOptionEXprice").value; 
+       var targetCallBuyPrice = document.getElementById("NearByOption").value; 
+       var targetCallSellPrice = document.getElementById("NearBySellOption").value;
+       
+       var goalStrikePrice = targetStrike.split(",").map(Number);
+       var goalCallBuy = targetCallBuyPrice.split(",").map(Number);
+       var goalCallSell = targetCallSellPrice.split(",").map(Number);
+       
+       var initialSpreadPnL = currCallSell - sellCallBuyPrice;
+       var latestPremium = 0;
+       var sellCallDelta = 0;
+       var priceToStrikeDelta = 0;
+       var dividendYield = 0;
+       
+  resultContainer.innerHTML += stockPrice + "。。" + investment + "。。" + divPerPeriod + "。。" + sellCallBuyPrice + "。。" + currCallSell + "。。" + goalStrikePrice[0] + "。。" + goalCallBuy[1] + "。。" + goalCallSell[2] + "<br>";
+  
+  resultContainer.innerHTML += " 原 Bear Call 结算损益： " + initialSpreadPnL.toFixed(2) + "<br>";
+  
+  for (let i = 0; i < goalStrikePrice.length; i++) {
+   resultContainer.innerHTML += " 当执行价为： " + goalStrikePrice[i] + " 时 " + "<br>";
+   latestPremium = goalCallSell[i] + initialSpreadPnL;
+      resultContainer.innerHTML += " Sell Call 权利金是 " + goalCallSell[i] + "， 结算后最新获得权利金为： " + latestPremium.toFixed(2) + "<br>";
+     for (let j = 0; j < goalStrikePrice.length; j++) {
+     sellCallDelta = latestPremium - goalCallBuy[j];
+     priceToStrikeDelta =  goalStrikePrice[i] - goalStrikePrice[j] ;
+     dividendYield = 100*4*divPerPeriod/goalStrikePrice[j];
+   resultContainer.innerHTML += " 索引： " + j + "，" + " 执行价： " + goalStrikePrice[j] + " ，与当前执行价相差： " + priceToStrikeDelta.toFixed(2) + "，股息率： " + dividendYield.toFixed(2) + " %，" + " 目标期权买价： " + goalCallBuy[j] + "，与当前sellcal相差值：" + sellCallDelta.toFixed(2) + "<br>";  
+    }
+   }
+        }
+    </script>
+</body>
+</html>
