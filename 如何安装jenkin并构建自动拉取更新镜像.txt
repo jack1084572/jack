@@ -1,0 +1,78 @@
+方法一：用 Docker 在 Cloud Shell 中运行 Jenkins（推荐）
+🧱 前提：Cloud Shell 中已内置 Docker
+🚀 步骤一：拉取官方 Jenkins 镜像
+bash
+复制
+编辑
+docker pull jenkins/jenkins:lts
+🚀 步骤二：运行 Jenkins 容器（绑定端口 + 持久化）
+bash
+复制
+编辑
+docker run -d \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  --name jenkins \
+  jenkins/jenkins:lts
+-p 8080:8080：映射 Jenkins 网页端口
+
+-v jenkins_home:/var/jenkins_home：使用持久化卷（重启镜像数据不丢）
+
+-d：后台运行
+
+--name jenkins：容器命名为 jenkins
+
+🚀 步骤三：访问 Jenkins 网页界面
+点击 Cloud Shell 顶部的「Web 预览 → 预览端口 8080」
+
+或者打开 URL：
+
+cpp
+复制
+编辑
+https://8080-dot-YOUR-SESSION-ID.developers.devshell.appspot.com
+🔑 获取初始管理员密码
+bash
+复制
+编辑
+docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+复制密码 → 粘贴到 Jenkins 初始化页面中。
+
+
+
+方法一：直接读取密码（推荐）
+bash
+复制
+编辑
+docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+这条命令会输出一长串密码，复制后粘贴到 Jenkins 的网页界面上即可完成首次登录。
+
+方法二：进入 Jenkins 容器内部
+你也可以用交互方式进入 Jenkins 容器：
+
+bash
+复制
+编辑
+docker exec -it jenkins bash
+然后在容器内运行：
+
+bash
+复制
+编辑
+cat /var/jenkins_home/secrets/initialAdminPassword
+看到密码后可以输入：
+
+bash
+复制
+编辑
+exit
+补充说明
+jenkins 是你容器的名字，如果你用的是其他名字（比如 myjenkins），请替换成实际容器名。
+
+如果你忘了容器名，可以用：
+
+bash
+复制
+编辑
+docker ps
